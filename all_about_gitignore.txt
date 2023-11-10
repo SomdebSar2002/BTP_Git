@@ -38,6 +38,9 @@ Add the patterns of files and directories you want to ignore.
 Save the file.
 Remember to commit and push the .gitignore file to your repository to ensure that other collaborators also follow the same ignore rules.
 
+$ git checkout -b feature1
+
+adds new branch and gets into new branch
 
 
 
