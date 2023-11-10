@@ -89,3 +89,108 @@ bash
 Copy code
 $ git checkout -f
 Forces a checkout, discarding local changes. This is generally used to discard changes in the working directory.
+
+Viewing the Last Commit (with Changes):
+
+bash
+Copy code
+$ git log -p -1
+This command shows the details of the last commit, including the commit hash, author, date, commit message, and the changes made.
+
+Viewing the Changes Made in the Working Directory:
+
+bash
+Copy code
+$ git diff
+This command shows the unstaged changes made in the working directory.
+
+Staging All Changes:
+
+bash
+Copy code
+$ git add -A
+Adds all changes, including untracked files, to the staging area.
+
+Viewing Changes Staged for Commit:
+
+bash
+Copy code
+$ git diff --staged
+Shows the changes that have been staged but not yet committed.
+
+Forcing Checkout to Discard Local Changes:
+
+bash
+Copy code
+$ git checkout -f
+Forces a checkout, discarding local changes. This is generally used to discard changes in the working directory.
+
+Viewing the Changes Made (Again):
+
+bash
+Copy code
+$ git diff
+Shows the changes in the working directory after forced checkout.
+
+Committing Changes with a Message:
+
+bash
+Copy code
+$ git commit -m "Again added commands"
+Commits the changes in the staging area with the commit message "Again added commands."
+
+Creating a New File (waste.html):
+
+bash
+Copy code
+$ touch waste.html
+Creates a new file named waste.html in the current directory.
+
+Staging All Changes (Including Untracked Files):
+
+bash
+Copy code
+$ git add -A
+Adds all changes, including untracked files, to the staging area.
+
+Committing Changes with a Message:
+
+bash
+Copy code
+$ git commit -a -m "added Waste"
+Commits all changes, including untracked files, with the commit message "added Waste."
+
+Removing a File from Staging Area:
+
+bash
+Copy code
+$ git rm --cached waste.html
+Removes waste.html from the staging area.
+
+Checking the Status of the Repository:
+
+bash
+Copy code
+$ git status
+Shows the status of the Git repository, including changes to be committed and untracked files.
+
+Committing Changes with a Message (Removing waste.html):
+
+bash
+Copy code
+$ git commit -m "Removing waste"
+Commits the removal of waste.html with the commit message "Removing waste."
+
+Viewing the Last Two Commits (with Changes):
+
+bash
+Copy code
+$ git log -p -2
+Shows the details of the last two commits, including the commit hash, author, date, commit message, and the changes made.
+
+Checking the Status in Short Format:
+
+bash
+Copy code
+$ git status -s
+Shows the status of the Git repository in short format, indicating untracked files.
