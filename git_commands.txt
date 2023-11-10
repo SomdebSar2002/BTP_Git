@@ -1,0 +1,91 @@
+Setting Global Git Configuration:
+
+bash
+Copy code
+$ git config --global user.name Somdeb
+$ git config --global user.email 20mm02003@iitbbs.ac.in
+These commands set the global configuration for your Git user name and email.
+
+Opening Visual Studio Code in the Current Directory:
+
+bash
+Copy code
+$ code .
+This command opens Visual Studio Code in the current directory.
+
+Initializing a Git Repository:
+
+bash
+Copy code
+$ git init
+Initializes a new Git repository in the current directory.
+
+Checking the Contents of the Directory:
+
+bash
+Copy code
+$ ls -lart
+Lists the contents of the directory, including hidden files, in reverse chronological order.
+
+Checking the Git Status:
+
+bash
+Copy code
+$ git status
+Checks the status of your Git repository, showing untracked files and changes to be committed.
+
+Staging a File for Commit:
+
+bash
+Copy code
+$ git add dendrite_revised.ipynb
+Adds the file dendrite_revised.ipynb to the staging area.
+
+Committing Changes:
+
+bash
+Copy code
+$ git commit -m "Initial commit"
+Commits the changes in the staging area with the commit message "Initial commit."
+
+Creating a New File:
+
+bash
+Copy code
+$ touch about.txt
+Creates a new file named about.txt in the current directory.
+
+Staging All Changes:
+
+bash
+Copy code
+$ git add -A
+Adds all changes, including untracked files, to the staging area.
+
+Committing Changes with a Message:
+
+bash
+Copy code
+$ git commit -m "Added about"
+Commits the changes in the staging area with the commit message "Added about."
+
+Checking the Git Status Again:
+
+bash
+Copy code
+$ git status
+Checks the status of the Git repository after committing changes.
+
+Checking Out a File from the Index (Undoing Changes):
+
+bash
+Copy code
+$ git checkout about.txt
+Undoes changes to the file about.txt that are in the staging area but not committed.
+
+Forcing Checkout to Discard Local Changes:
+
+bash
+Copy code
+$ git checkout -f
+Forces a checkout, discarding local changes. This is generally used to discard changes in the working directory.
