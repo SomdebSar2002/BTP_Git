@@ -42,6 +42,9 @@ $ git checkout -b feature1
 
 adds new branch and gets into new branch
 
+$git clone "git-url" file-name
+
+clones git url repository to that file
 
 
 
