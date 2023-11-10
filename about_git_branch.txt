@@ -1,0 +1,109 @@
+Here's a breakdown of the commands you used:
+
+Create a new branch named feature1:
+
+bash
+Copy code
+$ git branch feature1
+List all branches:
+
+bash
+Copy code
+$ git branch
+The feature1 branch is created, and you are currently on the master branch.
+
+Switch to the feature1 branch:
+
+bash
+Copy code
+$ git checkout feature1
+Now you are on the feature1 branch.
+
+Check the status of the repository:
+
+bash
+Copy code
+$ git status
+Confirms that there are no changes to commit in the feature1 branch.
+
+List files in the directory:
+
+bash
+Copy code
+$ ls
+Displays the files in the working directory.
+
+Add all changes to the staging area:
+
+bash
+Copy code
+$ git add -A
+Commit changes with the message "Fixed extra brackets":
+
+bash
+Copy code
+$ git commit -m "Fixed extra brackets"
+Commits the changes to the feature1 branch.
+
+Commit changes with the message "Created another branch":
+
+bash
+Copy code
+$ git commit -m "Created another branch"
+Another commit on the feature1 branch.
+
+Switch back to the master branch:
+
+bash
+Copy code
+$ git checkout master
+Switch back to the feature1 branch:
+
+bash
+Copy code
+$ git checkout feature1
+Add all changes to the staging area (warning about line endings):
+
+bash
+Copy code
+$ git add -A
+Git warns about line ending changes.
+
+Commit changes with the message "did some commenting":
+
+bash
+Copy code
+$ git commit -m "did some commenting"
+Another commit on the feature1 branch.
+
+Switch back to the master branch:
+
+bash
+Copy code
+$ git checkout master
+Check the difference between branches (no changes in master):
+
+bash
+Copy code
+$ git diff
+Check the status of the repository (no changes in master):
+
+bash
+Copy code
+$ git status
+Switch back to the feature1 branch:
+
+bash
+Copy code
+$ git checkout feature1
+Switch back to the master branch:
+
+bash
+Copy code
+$ git checkout master
+Merge changes from feature1 into master:
+
+bash
+Copy code
+$ git merge feature1
+A fast-forward merge occurs since there are no conflicting changes, and the master branch is updated with the changes from feature1.
