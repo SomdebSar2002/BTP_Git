@@ -65,8 +65,8 @@ for species, D in D_coeff.items():
     eeta[species] = Mu[species] * del_t   
 La , Lb = 13.6 , 13.6                                   # domain size La x Lb in nano metres
 #defining the system size
-m = 1
-n = 1
+m = 50
+n = 50
 x = np.linspace(0, La, m)
 y = np.linspace(0, Lb, n)
 potential_ion_values= {}
@@ -120,7 +120,7 @@ def calculate_electric_field(distance,key, own_key, direction):
 def calculate_resultant_electric_field(ion_positions, target_position,own_key):
     total_electric_field_x = 0  # Initialize total electric field x-component
     total_electric_field_y = 0  # Initialize total electric field y-component
-    for key, val in ion_positions:
+    for key,val in ion_positions.items():
         for i in range(len(val)):
             # Calculate distance and direction
             distance = np.sqrt((val[i][0] - target_position[0])**2 + (val[i][1] - target_position[1])**2)
@@ -303,13 +303,17 @@ while (True):
     iteration_count = iteration_count + 1
     print("\nEntering while loop")
     filename1 = "53_without_contours"+str(img2)+".jpg"
-    filename2 = "/Users/ajithbharathvaaj/dend 53 test/Only_atom_add_53_"+str(img2)+"__.jpg"
+    filename2 = "./dend 53 test/Only_atom_add_53_"+str(img2)+"__.jpg"
     t = t + del_t
     E_indices = {}
 # finding the right electric field vector for each ion to act upon
     for key, values in positions_ions.items():
+        # print("values ",values)
+        print("values ",np.shape(values))
         E_indian_indices = []
         for index, ions in enumerate(values):
+            # print("ions ",ions)
+            print("ions ",np.shape(ions))
             E_indian_indices.append(Find_the_index(ions[0], ions[1]))
         E_indices[key] = E_indian_indices
 
@@ -346,7 +350,7 @@ while (True):
             A = [g_vector * theta[key] for g_vector in g]
             C = calculate_resultant_electric_field(positions_ions,ions,key)
             E_resultant = [(E_x_t[E_idx[0]][E_idx[1]] + C[0]) ,(E_y_t[E_idx[0]][E_idx[1]] + C[1])]
-            B = [10e5*eeta * E_resultant[0] ,10e5*eeta * E_resultant[1]]
+            B = [10e5*eeta[key] * E_resultant[0] ,10e5*eeta[key] * E_resultant[1]]
             A =np.array(A)
             B =np.array(B)
             print('A = ',A,'   B = ',B,' ions = ',ions,' E x = ',E_x_t[E_idx[0]][E_idx[1]],' E y = ',E_y_t[E_idx[0]][E_idx[1]],"  ",iteration_count)
@@ -373,51 +377,13 @@ while (True):
             # check collision and update accordingly
 
     positions_ions = updated_positions_ions
-    # -----------------------------------------------------------------------------------------------------------------------------------------------------
-   
-    plt.figure(figsize=(8.5,8.5))
-    ax = plt.axes()
-    ssf=5
-    ax.quiver(xv[::ssf, ::ssf],  # Subsampled X-coordinates
-            yv[::ssf, ::ssf],  # Subsampled Y-coordinates
-            E_x_t[::ssf, ::ssf],  # Subsampled X-components
-            E_y_t[::ssf, ::ssf],  # Subsampled Y-components
-            scale=0.8 , color='blue',pivot='tip',alpha = 0.2)  # Adjust the arrow length
-    atom_matrix_T = np.transpose(atom_matrix)
-    ax.scatter(atom_matrix_T[0][:],atom_matrix_T[1][:],c='#39FF14',s=45)
-    #only transpose positions_ions array while plotting
-    potentials_Mirror_Transform = potential_matrix_transform(potentials)
-    ax.contour(xv,yv,potentials_Mirror_Transform,levels = 13,colors = 'gray',linestyles='None',linewidths=1)
-    start_points = np.round(np.array(positions_ions), decimals=32)
-    kdtree = cKDTree(positions_ions)
-    for isp,s_p in enumerate(start_points):
-        indices = kdtree.query_ball_point(s_p, 2)
-        for ind in indices:
-            x_ind, y_ind = positions_ions[ind]
-            # Calculate the arrow components
-            dx = -(x_ind - s_p[0]) / 2
-            dy = -(y_ind - s_p[1]) / 2
-            # Plot the arrow
-            ax.quiver(x_ind, y_ind, dx, dy, angles='xy', scale_units='xy', scale=1,color = 'k', width=0.003, headwidth=5,alpha=1)
-            # Reverse direction
-            dx = -(s_p[0] - x_ind) / 2
-            dy = -(s_p[1] - y_ind) / 2
-            # Plot the arrow in the reverse direction
-            ax.quiver(s_p[0], s_p[1], dx, dy, angles='xy', scale_units='xy', scale=1,color = 'k', width=0.003, headwidth=5,alpha=1)
-    positions_ions_T = np.transpose(positions_ions)
-    ax.scatter(positions_ions_T[0,:],positions_ions_T[1,:],c='red',s=40)   
-    ax.set_xlabel('CGMC DENDRITE SIMULATION \nCapture Time: '+ str(round(t,8)), loc = 'center',fontsize=14,fontweight='bold',fontname= 'Times New Roman' )
-    ax.set_xlim(0,16.7)
-    ax.set_ylim(0,16.7)
-    plt.savefig("cont sim"+str(iteration_count)+".jpg",dpi = 400)
-    plt.close() 
-    # -----------------------------------------------------------------------------------------------------------------------------------------------------
+
     #distance calculation between the ions and atoms and
     #deciding whether to attach it to the dendrite
     num_ion_deleted = 0 #this variable counts the number of ions deleted and it helps in adding the same amount of ion in the next iteration.
     
     ion_to_atom_transfer = []
-    for index_ion , ion  in enumerate(positions_ions):
+    for index_ion , ion  in enumerate(positions_ions['Mg(H2PO4)+']):
         for index_atom , atom in enumerate(atom_matrix):
             dist = np.sqrt(((ion[0] - atom[0])**2 + (ion[1] - atom[1])**2))
             if (dist < d_att2) or (dist==d_att2):
@@ -426,8 +392,6 @@ while (True):
     if len(ion_to_atom_transfer)>0:
         seperated_transfer_matrix = separate_arrays_by_column(ion_to_atom_transfer)
         for key,value in seperated_transfer_matrix.items():
-            # for __ in enumerate(value,start=0):
-            #     indexions_separate = [element[0] for element in value]
             for _ in enumerate(value,start=0):
                 dist_btw_ions_atoms  = [element[2] for element in value]
             
@@ -462,25 +426,6 @@ while (True):
             potentials = np.array(potentials,dtype=float)
             potentials = FDM_potentials_2_1(points_atom,iteration_count)
             E_x , E_y = FDM_Electric_Field_Vector(potentials)
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
-            
-            
             t2 = time.time()
             print("time of completion of one potential and one E vector calc: ", t2-t1)
             plt.figure(figsize=(8.5,8.5))
@@ -584,9 +529,6 @@ while (True):
         ax1.set_ylim(min(dendrite_height),max(dendrite_height))
         plt.savefig("dendrite height vs time.jpg",dpi = 600)
         plt.close()
-        break
-    if abs(dist) > 100 : 
-        print("the sim ended because the distance b/w ion and atom went greater than 100")
         break
 
 end = time.time()
