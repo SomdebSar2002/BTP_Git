@@ -5,29 +5,97 @@ import matplotlib.pyplot as plt
 import random
 import time
 from scipy.spatial import cKDTree
+
 start = time.time()
 #time step in seconds
+''' upto index 4 are ions '''
+# Ionic Radii (in nanometers)
+sizes= {"H+":0.053, "Mg2+":0.065, "NO3-":0.3, "H2PO4-":0.4,  "Mg(H2PO4)+":0.65, "Mg(NO3)2":0.6, "H3PO4":0.6, "HNO3":0.5}
+p_asn = {"HNO3":0.132,"H3PO4":0.966,"Mg(NO3)2":0.316,"Mg(H2PO4)+":0.98} #porbability of association
+size_mhpt = 0.25 #in nm
+
+# sizes = np.array( [0.053, 0.065, 0.3, 0.4, 0.65, 0.6, 0.6, 0.5])
+                   #H+ Mg2+ NO3- H2PO4-  Mg(H2PO4)+ Mg(NO3)2 H3PO4 HNO3
+# Diffusion Coefficients in square meters per second (m²/s)
+
+D_coeff = {"H+":9.31e-9, "Mg2+":7.5e-10, "NO3-":1.0e-9, "H2PO4-":8.67e-10,  "Mg(H2PO4)+":7.5e-10, "Mg(NO3)2":1.25e-9, "H3PO4":1.25e-9, "HNO3":1.1e-9}
+
+color = {"H+":"#75FB4", "Mg2+":"#EA3323", "NO3-":"215212", "H2PO4-":"EA33B2",  "Mg(H2PO4)+":"0000F5", "Mg(NO3)2":"469DF8", "H3PO4":"F7042BA", "HNO3":"905146"}
+# const = np.array([
+#     9.31e-9,   # H+ (Hydrogen ion) in water at 25°C
+#     7.5e-10,   # Mg2+ (Magnesium ion) in water at 25°C
+#     1.0e-9,    # NO3- (Nitrate ion) in water at 25°C
+#     8.67e-10,  # H2PO4- (Dihydrogen phosphate ion) in water at 25°C
+#     7.5e-10,   # Mg(H2PO4)+ (Magnesium Dihydrogen Phosphate) in water at 25°C
+#     1.25e-9,   # Mg(NO3)2 (Magnesium Nitrate) in water at 25°C
+#     1.25e-9,   # H3PO4 (Phosphoric Acid) in water at 25°C
+#     1.1e-9    # HNO3 (Nitric Acid) in water at 25°C
+# ])
+
+kb = 8.6173303 * 1e-5   #it's in ev/k
+charge_dict = {"H+": 1, "Mg2+": 2, "NO3-": -1, "H2PO4-": -1, "Mg(H2PO4)+": 1, "Mg(NO3)2": 0, "H3PO4": 0, "HNO3": 0}
+elementary_charge = 1.609 * 1e-19  # in C
+
+q = {}
+for species, charge in charge_dict.items():
+    q[species] = charge * elementary_charge
+
+T  = 298                #it's in K obviously!!
+
+Mu = {}
+for species, D in D_coeff.items():
+    Mu[species] = q[species] * D / (kb * T)
+
+
+
 del_t = 10 ** -6                                        # i.e., micro seconds
-qc = 1.6 * 10**(-19)                                       # coulombs
-k = 8.9875 * 10**(9) 
-d_att =  0.238 # nm                                     # distance of attraction in nano metre
-atomic_radius = 0.155    # nm                             nanometre    
-d_att2 = atomic_radius * 1.5  #  nm                     # cutoff distance
+d_att =  0.238 # nm                                     # distance of attraction in nano metre         
+d_att2 = (d_att) * 2  #  nm                             # cutoff distance
 V_cathode = 0 # volts                                   # voltage of cathode and anode 
-V_anode = -0.085 # volts
-ion_radius = 0.12    # nm                                 nanometre
-d2 = 1.3 * ion_radius                                   # distance for smoothening the voltage
-D_coeff = 1.4 * 10 ** (-14) #metre ^2 / second          # diffusion coefficient of Li ion
-Mu = 5.6 * 10 ** (-13) #metre^2 /(Volt second)          # mobility of Li ion 
-theta = math.sqrt(2 * D_coeff * del_t)
-eeta = Mu * del_t   
-La , Lb = 16.7 , 16.7                                   # domain size La x Lb in nano metres
+V_anode = 2 # volts
+
+# ion_radius = 0.12    # nm                                 nanometre
+# d2 = 1.3 * sizes                               # distance for smoothening the voltage
+# D_coeff = 1.4 * 10 ** (-14) #metre ^2 / second          # diffusion coefficient of Li ion
+# Mu = 5.6 * 10 ** (-13) #metre^2 /(Volt second)          # mobility of Li ion 
+theta = {}
+eeta = {}
+for species, D in D_coeff.items():
+    theta[species] = math.sqrt(2 * D * del_t)
+    eeta[species] = Mu[species] * del_t   
+La , Lb = 13.6 , 13.6                                   # domain size La x Lb in nano metres
 #defining the system size
-m = 50
-n = 50
+m = 1
+n = 1
 x = np.linspace(0, La, m)
 y = np.linspace(0, Lb, n)
+potential_ion_values= {}
 xv , yv = np.meshgrid(x , y , indexing='xy')
+
+# start = time.time()
+#time step in seconds
+
+# del_t = 10 ** -6                                        # i.e., micro seconds
+qc = 1.6 * 10**(-19)                                       # coulombs
+k = 8.9875 * 10**(9) 
+# d_att =  0.238 # nm                                     # distance of attraction in nano metre
+# atomic_radius = 0.155    # nm                             nanometre    
+# d_att2 = atomic_radius * 1.5  #  nm                     # cutoff distance
+# V_cathode = 0 # volts                                   # voltage of cathode and anode 
+# V_anode = -0.085 # volts
+# ion_radius = 0.12    # nm                                 nanometre
+# d2 = 1.3 * ion_radius                                   # distance for smoothening the voltage
+# D_coeff = 1.4 * 10 ** (-14) #metre ^2 / second          # diffusion coefficient of Li ion
+# Mu = 5.6 * 10 ** (-13) #metre^2 /(Volt second)          # mobility of Li ion 
+# theta = math.sqrt(2 * D_coeff * del_t)
+# eeta = Mu * del_t   
+# La , Lb = 16.7 , 16.7                                   # domain size La x Lb in nano metres
+# #defining the system size
+# m = 50
+# n = 50
+# x = np.linspace(0, La, m)
+# y = np.linspace(0, Lb, n)
+# xv , yv = np.meshgrid(x , y , indexing='xy')
 potential_values = np.zeros((len(x),len(y)) , dtype = float)
 for i in range(1,m-1):
     for j in range(1,n-1):
@@ -42,30 +110,30 @@ def calculate_potential(charge, distance):
         return 0
     return k * charge / distance
 
-def calculate_electric_field(distance, direction):
+def calculate_electric_field(distance,key, own_key, direction):
     if distance == 0:
         return[0,0]
-    potential = calculate_potential( 13 * qc , distance)
+    potential = calculate_potential( 1 * qc *charge_dict[key]*charge_dict[own_key], distance)
     magnitude = -potential / distance
     return [magnitude * d for d in direction]
 
-def calculate_resultant_electric_field(ion_positions, target_position):
+def calculate_resultant_electric_field(ion_positions, target_position,own_key):
     total_electric_field_x = 0  # Initialize total electric field x-component
     total_electric_field_y = 0  # Initialize total electric field y-component
-    for i in range(len(ion_positions)):
-        # Calculate distance and direction
-        distance = np.sqrt((ion_positions[i][0] - target_position[0])**2 + (ion_positions[i][1] - target_position[1])**2)
-        direction = [(ion_positions[i][0] - target_position[0]) / distance, (ion_positions[i][1] - target_position[1]) / distance]
+    for key, val in ion_positions:
+        for i in range(len(val)):
+            # Calculate distance and direction
+            distance = np.sqrt((val[i][0] - target_position[0])**2 + (val[i][1] - target_position[1])**2)
+            direction = [(val[i][0] - target_position[0]) / distance, (val[i][1] - target_position[1]) / distance]
 
-        # Calculate electric field due to the i-th ion
-        electric_field = calculate_electric_field(distance, direction)
+            # Calculate electric field due to the i-th ion
+            electric_field = calculate_electric_field(distance,key,own_key,direction)
 
-        # Add the x and y components of the electric field to the total
-        total_electric_field_x += electric_field[0]
-        total_electric_field_y += electric_field[1]
+            # Add the x and y components of the electric field to the total
+            total_electric_field_x += electric_field[0]
+            total_electric_field_y += electric_field[1]
     
-    Ex_y_magnitude = np.sqrt(total_electric_field_x **2 + total_electric_field_y **2)
-    return [total_electric_field_x, total_electric_field_y, Ex_y_magnitude]
+    return [total_electric_field_x, total_electric_field_y]
 
 def FDM_potentials():
     epsilon = 1e-8
@@ -187,15 +255,28 @@ def separate_arrays_by_column(array):
 
     return {key: np.array(value) for key, value in separated_arrays.items()}
 
-positions_ions = []
+positions_ions = {}
 #initializing random ions
-initial_ions = 50 
+sizes= {"H+":0.053, "Mg2+":0.065, "NO3-":0.3, "H2PO4-":0.4,  "Mg(H2PO4)+":0.65, "Mg(NO3)2":0.6, "H3PO4":0.6, "HNO3":0.5}
+initial_ions = {"H+":10, "Mg2+":10, "NO3-":20, "H2PO4-":10,  "Mg(H2PO4)+":0}
+updated_positions_ions = {}
+for key,ion_num in initial_ions.items():
+    positions_ions_element = []
+    for i in range(0,ion_num):
+        positions_ions_element.append([random.random() * La , La])
+    positions_ions[key] = positions_ions_element
+    updated_positions_ions[key]=np.zeros((ion_num,2))
 
-for i in range(0,initial_ions):
-    positions_ions.append([random.random() * La , La-1])
-        
-updated_positions_ions=np.zeros((initial_ions,2))
-no_of_base_atoms = 70                           #creating a base layer in anode i.e., the bottom layer of system
+
+
+
+
+
+
+
+
+
+no_of_base_atoms = 27                           #creating a base layer in anode i.e., the bottom layer of system
 positions_base = np.linspace(0,La,no_of_base_atoms)
 atom_matrix = np.zeros((2,no_of_base_atoms))
 for i in range(no_of_base_atoms):
@@ -211,6 +292,10 @@ E_indices=[]
 dendrite_height=[]
 time_array=[]
 dend = 0
+print("\nTHE SIMULATION HAS STARTED... ")
+num_ion_deleted=0
+
+dend = 0
 iteration_count = 0
 iteration_inner_count=0
 print("\nTHE SIMULATION HAS STARTED... ")
@@ -220,9 +305,14 @@ while (True):
     filename1 = "53_without_contours"+str(img2)+".jpg"
     filename2 = "/Users/ajithbharathvaaj/dend 53 test/Only_atom_add_53_"+str(img2)+"__.jpg"
     t = t + del_t
-    #  finding the right electric field vector for the each ion to act upon
-    for index,ions in enumerate(positions_ions):
-        E_indices.append(Find_the_index(ions[0],ions[1]))    
+    E_indices = {}
+# finding the right electric field vector for each ion to act upon
+    for key, values in positions_ions.items():
+        E_indian_indices = []
+        for index, ions in enumerate(values):
+            E_indian_indices.append(Find_the_index(ions[0], ions[1]))
+        E_indices[key] = E_indian_indices
+
         # here the E_indices is a n x 2 array which stores the positions of the ions 
         # with respect to the mesh grid
     #  movement of the ions is defined by the equation given in the pdf page 24     
@@ -231,51 +321,56 @@ while (True):
         potentials = FDM_potentials()
         E_x , E_y = FDM_Electric_Field_Vector(potentials)
         E_x_t , E_y_t = potential_matrix_transform(E_x) , potential_matrix_transform(E_y)
-        # print(E_y)
-        # plt.imshow(E_y)
-        # plt.colorbar()
-        # plt.show()
-        t2 = time.time()
-        print("time of completion of one potential and one E vector calc: ", t2-t1)
-        positions_ions = np.array(positions_ions)
-        ion_atom_combine = np.vstack((positions_ions,atom_matrix))
-        positions_ions.tolist()
-    E_mag = []
-    for p ,(ions,E_idx) in enumerate(zip(positions_ions,E_indices),start=0):
-        a_vector = random.uniform(-1, 1) 
-        b_vector = random.uniform(-1,1)  
-        mod_of_a_and_b = math.sqrt(a_vector **2 + b_vector **2)
-        # g is a normalized 2 D vector
-        g = np.array([a_vector/mod_of_a_and_b , b_vector/mod_of_a_and_b])
-        A = [g_vector * theta for g_vector in g]
-        C = calculate_resultant_electric_field(positions_ions,ions)
-        E_mag.append(C[2])
-        E_resultant = [(E_x_t[E_idx[0]][E_idx[1]] + C[0]) ,(E_y_t[E_idx[0]][E_idx[1]] + C[1])]
-        B = [ 10e5*eeta * E_resultant[0] ,10e5*eeta * E_resultant[1]]
-        A =np.array(A)
-        B =np.array(B)
-        print('A = ',A,'   B = ',B,' ions = ',ions,' E x = ',E_x_t[E_idx[0]][E_idx[1]],' E y = ',E_y_t[E_idx[0]][E_idx[1]],"  ",iteration_count)
-        updated_positions_ions[p] =(A + B +  np.round(np.array((ions)) * (10 ** -9) , decimals=20)  )/10**-9
-        collision = True
-        while collision == True:
-            if (updated_positions_ions[p][1] > 16.7):
-                updated_positions_ions[p][1] = 16.7
-            if (updated_positions_ions[p][1] < 0):
-                updated_positions_ions[p][1] = 0.5
-            if (updated_positions_ions[p][0] < 0) or (updated_positions_ions[p][0] > 16.7):
-                updated_positions_ions[p][0] = (updated_positions_ions[p][0]) % 16.7
-            # print("collision detection \n \n")
-            collision = aabb_overlaps(positions_ions,1.3 * ion_radius,atom_matrix,atomic_radius)
-            if collision==False:
-                break
+    p=0
+    
+    t2 = time.time()
+    print("time of completion of one potential and one E vector calc: ", t2-t1)
+    # positions_ions = np.array(positions_ions)
+    # positions_ions.tolist()
+    whole_bunch_of_ions = []
+    if len(positions_ions):
+        for key in positions_ions:
+            whole_bunch_of_ions.append(positions_ions[key])
+    whole_bunch_of_ions = np.array(whole_bunch_of_ions)
+    # ion_atom_combine = np.vstack((whole_bunch_of_ions,atom_matrix))
+
+    
+    for key in positions_ions:
+        for p ,(ions,E_idx) in enumerate(zip(positions_ions[key],E_indices[key]),start=0):
+            p = p % len(updated_positions_ions[key])    
+            a_vector = random.uniform(-1, 1) 
+            b_vector = random.uniform(-1,1)  
+            mod_of_a_and_b = math.sqrt(a_vector **2 + b_vector **2)
+            # g is a normalized 2 D vector
             g = np.array([a_vector/mod_of_a_and_b , b_vector/mod_of_a_and_b])
-            A = [g_vector * theta for g_vector in g]
-            B = [ 10e5*eeta * E_resultant , 10e5*eeta * E_resultant]
+            A = [g_vector * theta[key] for g_vector in g]
+            C = calculate_resultant_electric_field(positions_ions,ions,key)
+            E_resultant = [(E_x_t[E_idx[0]][E_idx[1]] + C[0]) ,(E_y_t[E_idx[0]][E_idx[1]] + C[1])]
+            B = [10e5*eeta * E_resultant[0] ,10e5*eeta * E_resultant[1]]
             A =np.array(A)
             B =np.array(B)
-            # print('A = ',A,' B = ',B,' ions = ',ions,' E x = ',E_x_t[E_idx[0]][E_idx[1]],' E y = ',E_y_t[E_idx[0]][E_idx[1]],"  ", attach," ",iteration_count)
+            print('A = ',A,'   B = ',B,' ions = ',ions,' E x = ',E_x_t[E_idx[0]][E_idx[1]],' E y = ',E_y_t[E_idx[0]][E_idx[1]],"  ",iteration_count)
             updated_positions_ions[p] =(A + B +  np.round(np.array((ions)) * (10 ** -9) , decimals=20)  )/10**-9
-        # check collision and update accordingly
+            collision = True
+            while collision == True:
+                if (updated_positions_ions[key][p][1] > 13.6):
+                    updated_positions_ions[key][p][1] = 13.6
+                if (updated_positions_ions[key][p][1] < 0):
+                    updated_positions_ions[key][p][1] = 0 
+                if (updated_positions_ions[key][p][0] < 0) or (updated_positions_ions[key][p][0] > 13.6):
+                    updated_positions_ions[key][p][0] = (updated_positions_ions[key][p][0]) % 13.6
+                # print("collision detection \n \n")
+                collision = aabb_overlaps(positions_ions[key],1.3 * sizes[key],atom_matrix,sizes["Mg(H2PO4)+"])
+                if collision==False:
+                    break
+                g = np.array([a_vector/mod_of_a_and_b , b_vector/mod_of_a_and_b])
+                A = [g_vector * theta[key] for g_vector in g]
+                B = [ 10e5*eeta[key] * E_resultant , 10e5*eeta[key] * E_resultant]
+                A =np.array(A)
+                B =np.array(B)
+                # print('A = ',A,' B = ',B,' ions = ',ions,' E x = ',E_x_t[E_idx[0]][E_idx[1]],' E y = ',E_y_t[E_idx[0]][E_idx[1]],"  ", attach," ",iteration_count)
+                updated_positions_ions[p] =(A + B +  np.round(np.array((ions)) * (10 ** -9) , decimals=20)  )/10**-9
+            # check collision and update accordingly
 
     positions_ions = updated_positions_ions
     # -----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -345,40 +440,6 @@ while (True):
             new_atom_array = [ (atom_matrix[int(atom_index)%len(atom_matrix),0] + normalize_x * d_att)%16.7 , (atom_matrix[int(atom_index)%len(atom_matrix),1] + normalize_y * d_att)%16.7 ]
             print("atom position: ",atom_matrix[int(atom_index)%len(atom_matrix),1]," atom index : ", atom_index)
             print("\n",new_atom_array)
-             
-            # overlap = False
-            # overlap_atoms =[]
-            # for index_atmm,atmm in enumerate(atom_matrix):
-            #     distance = np.sqrt(((new_atom_array[0] - atmm[0])**2 + (new_atom_array[1] - atmm[1])**2))
-            #     if distance < d_att:
-            #         overlap = True 
-            #         overlap_atoms.append([ atmm[0] , atmm[1],index_atmm])
-
-            # while overlap==True:
-            #     a_vect = random.uniform(-1, 1)
-            #     if iteration_count<50000:
-            #         b_vect = random.uniform(0,1)
-            #     else:
-            #         b_vect = random.uniform(-1,1)  
-            #     mod_of_a_and_b = math.sqrt(a_vect **2 + b_vect **2)
-            #     normalize1_x = a_vect / mod_of_a_and_b
-            #     normalize1_y = b_vect / mod_of_a_and_b
-            #     new_atom_array = [ (atmm[0] + normalize1_x * d_att)%16.7 , (atmm[1] + normalize1_y * d_att)%16.7 ]                 
-            #     distance2 = []
-            #     for over_atom in overlap_atoms:
-            #         distance2.append(np.sqrt((over_atom[0]-new_atom_array[0])**2 + (over_atom[1]-new_atom_array[1])**2))
-            #     if min(distance2) < d_att:
-            #         overlap = True
-            #         overlap_atoms=[]
-            #         for index_atmm,atmm in enumerate(atom_matrix):
-            #             distance = np.sqrt(((new_atom_array[0] - atmm[0])**2 + (new_atom_array[1] - atmm[1])**2))
-            #             if distance < d_att:
-            #                 overlap = True 
-            #                 overlap_atoms.append([ atmm[0] , atmm[1],index_atmm])
-            #     if min(distance2) > d_att: 
-            #         overlap = False
-
-            #deleting from the positions_ions list 
             positions_ions = positions_ions.tolist()  
             del positions_ions[int(key)]
             positions_ions = np.array(positions_ions)
@@ -401,6 +462,25 @@ while (True):
             potentials = np.array(potentials,dtype=float)
             potentials = FDM_potentials_2_1(points_atom,iteration_count)
             E_x , E_y = FDM_Electric_Field_Vector(potentials)
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+            
+            
             t2 = time.time()
             print("time of completion of one potential and one E vector calc: ", t2-t1)
             plt.figure(figsize=(8.5,8.5))
