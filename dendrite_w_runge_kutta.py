@@ -10,8 +10,14 @@ start = time.time()
 #time step in seconds
 ''' upto index 4 are ions '''
 # Ionic Radii (in nanometers)
-sizes= {"H+":0.053, "Mg2+":0.065, "NO3-":0.3, "H2PO4-":0.4,  "Mg(H2PO4)+":0.65, "Mg(NO3)2":0.6, "H3PO4":0.6, "HNO3":0.5}
+sizes= {"H+":0.053, "Mg2+":0.065, "NO3-":0.3, "H2PO4-":0.4,  "Mg(H2PO4)+":0.25, "Mg(NO3)2":0.6, "H3PO4":0.6, "HNO3":0.5}
+#questionable datas Mg9H
+#data sources realted to P_asn 
+#data sources realted to P_diss
+#data sources related to every variables considered here
 p_asn = {"HNO3":0.132,"H3PO4":0.966,"Mg(NO3)2":0.316,"Mg(H2PO4)+":0.98} #porbability of association
+#we need to nomalise or look for this in internet
+p_diss = {"HNO3":1-0.132,"H3PO4":1-0.966,"Mg(NO3)2":1-0.316,"Mg(H2PO4)+":1-0.98} #porbability of association
 size_mhpt = 0.25 #in nm
 
 # sizes = np.array( [0.053, 0.065, 0.3, 0.4, 0.65, 0.6, 0.6, 0.5])
@@ -20,7 +26,18 @@ size_mhpt = 0.25 #in nm
 
 D_coeff = {"H+":9.31e-9, "Mg2+":7.5e-10, "NO3-":1.0e-9, "H2PO4-":8.67e-10,  "Mg(H2PO4)+":7.5e-10, "Mg(NO3)2":1.25e-9, "H3PO4":1.25e-9, "HNO3":1.1e-9}
 
-color = {"H+":"#75FB4", "Mg2+":"#EA3323", "NO3-":"215212", "H2PO4-":"EA33B2",  "Mg(H2PO4)+":"0000F5", "Mg(NO3)2":"469DF8", "H3PO4":"F7042BA", "HNO3":"905146"}
+# color = {"H+":"#75FB4", "Mg2+":"#EA3323", "NO3-":"215212", "H2PO4-":"EA33B2",  "Mg(H2PO4)+":"0000F5", "Mg(NO3)2":"469DF8", "H3PO4":"F7042BA", "HNO3":"905146"}
+color = {
+    "H+": (117, 251, 180),
+    "Mg2+": (234, 51, 35),
+    "NO3-": (33, 82, 18),
+    "H2PO4-": (234, 51, 178),
+    "Mg(H2PO4)+": (0, 0, 245),
+    "Mg(NO3)2": (70, 157, 248),
+    "H3PO4": (247, 4, 43),
+    "HNO3": (144, 81, 70)
+}
+color = {key: (r / 255, g / 255, b / 255) for key, (r, g, b) in color.items()}
 # const = np.array([
 #     9.31e-9,   # H+ (Hydrogen ion) in water at 25°C
 #     7.5e-10,   # Mg2+ (Magnesium ion) in water at 25°C
@@ -33,6 +50,7 @@ color = {"H+":"#75FB4", "Mg2+":"#EA3323", "NO3-":"215212", "H2PO4-":"EA33B2",  "
 # ])
 
 kb = 8.6173303 * 1e-5   #it's in ev/k
+#chck
 charge_dict = {"H+": 1, "Mg2+": 2, "NO3-": -1, "H2PO4-": -1, "Mg(H2PO4)+": 1, "Mg(NO3)2": 0, "H3PO4": 0, "HNO3": 0}
 elementary_charge = 1.609 * 1e-19  # in C
 
@@ -43,14 +61,15 @@ for species, charge in charge_dict.items():
 T  = 298                #it's in K obviously!!
 
 Mu = {}
+#link for calculation
 for species, D in D_coeff.items():
     Mu[species] = q[species] * D / (kb * T)
 
 
 
 del_t = 10 ** -6                                        # i.e., micro seconds
-d_att =  0.238 # nm                                     # distance of attraction in nano metre         
-d_att2 = (d_att) * 2  #  nm                             # cutoff distance
+d_att =  size_mhpt # nm                                     # distance of attraction in nano metre         
+d_att2 = (d_att) * 1.3  #  nm                             # cutoff distance
 V_cathode = 0 # volts                                   # voltage of cathode and anode 
 V_anode = 2 # volts
 
@@ -63,10 +82,13 @@ eeta = {}
 for species, D in D_coeff.items():
     theta[species] = math.sqrt(2 * D * del_t)
     eeta[species] = Mu[species] * del_t   
+
+
+#from diff coeff
 La , Lb = 13.6 , 13.6                                   # domain size La x Lb in nano metres
 #defining the system size
-m = 50
-n = 50
+m = 20
+n = 20
 x = np.linspace(0, La, m)
 y = np.linspace(0, Lb, n)
 potential_ion_values= {}
@@ -104,6 +126,33 @@ for i in range(1,m-1):
         b[m-1][:] = V_cathode   #positive
         b[i][j] = V_anode + ((V_cathode - V_anode) * i/m)
         potential_values = b
+def swap(var1, var2):
+    temp = var1
+    var1 = var2
+    var2 = temp
+    return var1, var2
+
+def find_combination(name1,name2):
+    if name1=="H+" and name2 == "NO3-":
+        return "HNO3"
+    elif name1 == "Mg2+" and name2 == "NO3-":
+        return "Mg(NO3)2"
+    elif name1 == "H+" and name2 == "H2PO4-":
+        return "H3PO4"
+    elif name1 == "Mg2+" and name2 == "H2PO4-":
+        return "Mg(H2PO4)+"
+    else:
+        swap(name1,name2)
+        if name1=="H+" and name2 == "NO3-":
+            return "HNO3"
+        elif name1 == "Mg2+" and name2 == "NO3-":
+            return "Mg(NO3)2"
+        elif name1 == "H+" and name2 == "H2PO4-":
+            return "H3PO4"
+        elif name1 == "Mg2+" and name2 == "H2PO4-":
+            return "Mg(H2PO4)+"
+        else:
+            return "NA"
 
 def calculate_potential(charge, distance):
     if distance==0:
@@ -165,11 +214,7 @@ def FDM_potentials():
     # plt.show()
     return V_new
 
-def FDM_potentials_2_1(a_points,iter):
-    if iter < 300000:
-        for ap,a_p in enumerate(a_points):
-            if a_p[1]<10:
-                del a_points[ap]           
+def FDM_potentials_2_1(a_points,iter):         
     epsilon = 1e-8
     print("\n fdm function is accessed")
     V_new = potentials
@@ -193,7 +238,7 @@ def FDM_potentials_2_1(a_points,iter):
         for atom in a_points:
             x1, y1 = xv[atom[0], atom[1]], yv[atom[0], atom[1]]
             distances_squared = (xv - x1) ** 2 + (yv - y1) ** 2
-            points_inside_circle_indices = np.where(distances_squared <= d2)
+            points_inside_circle_indices = np.where(distances_squared <= 1.3*size_mhpt)
             V_new[points_inside_circle_indices] = V_anode
         # if iterable2%1000 == 0:
         #     print("difference:  ", diff)
@@ -221,28 +266,48 @@ def Find_the_index(target_xi,target_yi):
     return [i_index , j_index]
 
 def potential_matrix_transform(potential_matrix):
-    dummy_matrix = np.zeros((len(x),len(y)) , dtype = float)
-    j = 0
-    for i in range((m-1),-1,-1):
-        dummy_matrix[j,:] = potential_matrix[i,:]
-        j+=1
+    return np.flipud(potential_matrix)
 
-    return dummy_matrix
-
-def aabb_overlaps(particles1, radius1, particles2, radius2):
-    particles1 = np.array(particles1)
-    particles2 = np.array(particles2)
+def aabb_overlaps(aabb1, aabb2):
     for i in range(2):  # Only check x and y axes
-        min_coords1 = particles1[:, i] - radius1
-        max_coords1 = particles1[:, i] + radius1
-
-        min_coords2 = particles2[:, i] - radius2
-        max_coords2 = particles2[:, i] + radius2
-
-        if np.any(max_coords1 < np.expand_dims(min_coords2, axis=1)) or np.any(min_coords1 > np.expand_dims(max_coords2, axis=1)):
+        if aabb1[1][i] < aabb2[0][i] or aabb1[0][i] > aabb2[1][i]:
             return False
-
     return True
+
+def sweep_and_prune(aabb1, aabb2):
+    if aabb_overlaps(aabb1, aabb2):
+        return True
+    return False
+
+def aabb_overlap(positions_ions, current_ion_species, current_ion_index,sizes, atom_matrix, size_atom):
+    current_ion_positions = positions_ions[current_ion_species][current_ion_index]
+    ion_radius = sizes[current_ion_species]
+    current_ion_aabb = (current_ion_positions - ion_radius, current_ion_positions + ion_radius)
+    
+    # Sweep and prune for current ion positions
+    if sweep_and_prune(current_ion_aabb, current_ion_aabb):
+        return True
+    
+    # Sweep and prune for atom positions and current ion positions
+    for atom_positions in atom_matrix:
+        atom_radius = size_atom
+        atom_aabb = (atom_positions - atom_radius, atom_positions + atom_radius)
+        if sweep_and_prune(current_ion_aabb, atom_aabb):
+            return True
+    
+    # Remove current ion positions from all ion positions
+    all_other_ion_positions = np.concatenate([positions_ions[species] for species in positions_ions if species != current_ion_species])
+    
+    # Sweep and prune for all other ion positions and current ion positions
+    for other_ion_positions in all_other_ion_positions:
+        other_ion_species = 'OtherIon'  # Replace with the actual species of other ions
+        other_ion_radius = sizes[other_ion_species]
+        other_ion_aabb = (other_ion_positions - other_ion_radius, other_ion_positions + other_ion_radius)
+        if sweep_and_prune(current_ion_aabb, other_ion_aabb):
+            return True
+
+    return False
+
 
 def separate_arrays_by_column(array):
     array = np.array(array)
@@ -258,7 +323,7 @@ def separate_arrays_by_column(array):
 positions_ions = {}
 #initializing random ions
 sizes= {"H+":0.053, "Mg2+":0.065, "NO3-":0.3, "H2PO4-":0.4,  "Mg(H2PO4)+":0.65, "Mg(NO3)2":0.6, "H3PO4":0.6, "HNO3":0.5}
-initial_ions = {"H+":10, "Mg2+":10, "NO3-":20, "H2PO4-":10,  "Mg(H2PO4)+":0}
+initial_ions = {"H+":10, "Mg2+":10, "NO3-":20, "H2PO4-":10,  "Mg(H2PO4)+":0,"Mg(NO3)2":0, "H3PO4":0, "HNO3":0}
 updated_positions_ions = {}
 for key,ion_num in initial_ions.items():
     positions_ions_element = []
@@ -284,11 +349,14 @@ for i in range(no_of_base_atoms):
     
 atom_matrix = np.transpose(atom_matrix)
 dup_atom_matrix = atom_matrix
+
+for _ in enumerate(atom_matrix,start=0):
+        dendrite_y_axis  = [abs(element[1]) for element in atom_matrix]
+        
 t=0
 img1 = 0                          # img variable to pinpoint the image name from the array 
 img2 = 0
 num_of_atom_added = 0            # number of atom added to count how much of total atom added
-E_indices=[]
 dendrite_height=[]
 time_array=[]
 dend = 0
@@ -325,62 +393,146 @@ while (True):
         potentials = FDM_potentials()
         E_x , E_y = FDM_Electric_Field_Vector(potentials)
         E_x_t , E_y_t = potential_matrix_transform(E_x) , potential_matrix_transform(E_y)
-    p=0
     
-    t2 = time.time()
-    print("time of completion of one potential and one E vector calc: ", t2-t1)
+        t2 = time.time()
+        print("time of completion of one potential and one E vector calc: ", t2-t1)
     # positions_ions = np.array(positions_ions)
     # positions_ions.tolist()
-    whole_bunch_of_ions = []
-    if len(positions_ions):
-        for key in positions_ions:
-            whole_bunch_of_ions.append(positions_ions[key])
-    whole_bunch_of_ions = np.array(whole_bunch_of_ions)
-    # ion_atom_combine = np.vstack((whole_bunch_of_ions,atom_matrix))
+        p=0
+
+        # whole_bunch_of_ions = []
+        # if len(positions_ions):
+        #     for key in positions_ions:
+        #         whole_bunch_of_ions.append(positions_ions[key])
+        # whole_bunch_of_ions = np.array(whole_bunch_of_ions)
+        # ion_atom_combine = np.vstack((whole_bunch_of_ions,atom_matrix))
 
     
-    for key in positions_ions:
-        for p ,(ions,E_idx) in enumerate(zip(positions_ions[key],E_indices[key]),start=0):
-            p = p % len(updated_positions_ions[key])    
+    for  ((key1, ion_num1), (_, E_index)) in zip(positions_ions.items(), E_indices.items()):
+        for p, (ion1, E_idx) in enumerate(zip(ion_num1, E_index),start=0):
             a_vector = random.uniform(-1, 1) 
             b_vector = random.uniform(-1,1)  
             mod_of_a_and_b = math.sqrt(a_vector **2 + b_vector **2)
             # g is a normalized 2 D vector
             g = np.array([a_vector/mod_of_a_and_b , b_vector/mod_of_a_and_b])
-            A = [g_vector * theta[key] for g_vector in g]
-            C = calculate_resultant_electric_field(positions_ions,ions,key)
+            A = [g_vector * theta[key1] for g_vector in g]
+        #    calculate_resultant_electric_field(ion_positions, target_position,own_key):
+            C = calculate_resultant_electric_field(positions_ions,ion1,key1)
             E_resultant = [(E_x_t[E_idx[0]][E_idx[1]] + C[0]) ,(E_y_t[E_idx[0]][E_idx[1]] + C[1])]
-            B = [10e5*eeta[key] * E_resultant[0] ,10e5*eeta[key] * E_resultant[1]]
+            B = [ 1*eeta[key1] * E_resultant[0] ,1*eeta[key1] * E_resultant[1]]
             A =np.array(A)
             B =np.array(B)
             print('A = ',A,'   B = ',B,' ions = ',ions,' E x = ',E_x_t[E_idx[0]][E_idx[1]],' E y = ',E_y_t[E_idx[0]][E_idx[1]],"  ",iteration_count)
-            updated_positions_ions[p] =(A + B +  np.round(np.array((ions)) * (10 ** -9) , decimals=20)  )/10**-9
+            updated_positions_ions[key1][p] =(A + B +  np.round(np.array((ions)) * (10 ** -9) , decimals=20)  )/10**-9
+
             collision = True
             while collision == True:
-                if (updated_positions_ions[key][p][1] > 13.6):
-                    updated_positions_ions[key][p][1] = 13.6
-                if (updated_positions_ions[key][p][1] < 0):
-                    updated_positions_ions[key][p][1] = 0 
-                if (updated_positions_ions[key][p][0] < 0) or (updated_positions_ions[key][p][0] > 13.6):
-                    updated_positions_ions[key][p][0] = (updated_positions_ions[key][p][0]) % 13.6
+                if updated_positions_ions[key1][p][1] >13.6:
+                    updated_positions_ions[key1][p][1] =13.6
+                if updated_positions_ions[key1][p][1] < 0:
+                    updated_positions_ions[key1][p][1] = 0.5
+                if updated_positions_ions[key1][p][0] < 0 or updated_positions_ions[key1][p][0] >La:
+                    updated_positions_ions[key1][p][0] = (updated_positions_ions[key1][p][0]) %La     #considered La=Lb for instance
                 # print("collision detection \n \n")
-                collision = aabb_overlaps(positions_ions[key],1.3 * sizes[key],atom_matrix,sizes["Mg(H2PO4)+"])
+                
+                collision = aabb_overlap(updated_positions_ions,key1,p,sizes,atom_matrix,size_mhpt)
                 if collision==False:
                     break
+                a_vector = random.uniform(-1, 1) 
+                b_vector = random.uniform(-1,1)  
+                mod_of_a_and_b = math.sqrt(a_vector **2 + b_vector **2)
                 g = np.array([a_vector/mod_of_a_and_b , b_vector/mod_of_a_and_b])
-                A = [g_vector * theta[key] for g_vector in g]
-                B = [ 10e5*eeta[key] * E_resultant , 10e5*eeta[key] * E_resultant]
+                A = [g_vector * theta[key1] for g_vector in g]
+                C = calculate_resultant_electric_field(positions_ions,ion1,key1)
+                E_resultant = [(E_x_t[E_idx[0]][E_idx[1]] + C[0]) ,(E_y_t[E_idx[0]][E_idx[1]] + C[1])]
+                B = [ 1*eeta[key1] * E_resultant[0] ,1*eeta[key1] * E_resultant[1]]
                 A =np.array(A)
                 B =np.array(B)
                 # print('A = ',A,' B = ',B,' ions = ',ions,' E x = ',E_x_t[E_idx[0]][E_idx[1]],' E y = ',E_y_t[E_idx[0]][E_idx[1]],"  ", attach," ",iteration_count)
-                updated_positions_ions[p] =(A + B +  np.round(np.array((ions)) * (10 ** -9) , decimals=20)  )/10**-9
-            # check collision and update accordingly
+                updated_positions_ions[key1][p] =(A + B +  np.round(np.array((ions)) * (10 ** -9) , decimals=20)  )/10**-9
 
     positions_ions = updated_positions_ions
+    # kdtree = cKDTree(list([positions_ions].values()))
 
+    # Set the radius within which to find nearest ions
+    # position_to_name_and_coord = {}
+    # for key,values in positions_ions.items():
+    #     for value in values:
+    #         s = str(value[0]) + " " + str(value[1])
+    #         position_to_name_and_coord[s] = [key,[value]]
+
+    num_ion_deleted = 0 #this variable counts the number of ions deleted and it helps in adding the same amount of ion in the next iteration.
+
+    # # Loop through each ion and find nearest ions within the radius
+    # for ion_name, ion_coords in positions_ions.items():
+    #     # Query for neighbors within the specified radius
+    #     for i,ion_coord in enumerate(ion_coords,start=0):
+    #         neighbors_indices = kdtree.query_ball_point(ion_coord, r=sizes[ion_name]*2)
+
+    #     # Flatten the list of lists and filter out the index of the ion itself
+            
+    #         name,value = position_to_name_and_coord[neighbors_indices]
+            
+    #         p = random.uniform(0,1)
+    #         if p<p_asn[i]:
+    #             #form the combined molecule
+    #             c = find_combination(ion_name,name)
+    #             if c!="NA":
+    #                 p = (int)(random.uniform(0,1)*2)
+    #                 coor = []
+    #                 if p<0.5:
+    #                     coor = neighbors_indices
+    #                 else:
+    #                     coor = ion_coord
+    #                 positions_ions[c].append(coor)
+    #                 position_to_name_and_coord[coor] =c,positions_ions.index(c)
+    #                 del positions_ions[name][value]
+    #                 del positions_ions[ion_name][i]
+    #         elif p<p_diss[name]:
+    #             if c=="Mg(H2PO4)+":
+    #                 positions_ions["H2PO4-"].append([ion_coord[0]+sizes["H2PO4-"],ion_coord[1]+sizes["H2PO4-"]])
+    #                 positions_ions["Mg2+"].append([ion_coord[0]-sizes["Mg2+"],ion_coord[1]-sizes["Mg2+"]])
+    #                 del positions_ions[name][value]
+    #             if c=="HNO3":
+    #                 positions_ions["H+"].append([ion_coord[0]+sizes["H+"],ion_coord[1]+sizes["H+"]])
+    #                 positions_ions["NO3-"].append([ion_coord[0]-sizes["NO3-"],ion_coord[1]-sizes["NO3-"]])
+    #                 del positions_ions[name][value]
+    #             if c=="Mg(NO3)2":
+    #                 positions_ions["H+"].append([ion_coord[0]+sizes["H+"],ion_coord[1]+sizes["H+"]])
+    #                 positions_ions["NO3-"].append([ion_coord[0]-sizes["NO3-"],ion_coord[1]-sizes["NO3-"]])
+    #                 positions_ions["NO3-"].append([ion_coord[0]-2*sizes["NO3-"],ion_coord[1]-2*sizes["NO3-"]])
+    #                 del positions_ions[name][value]
+
+    plt.figure(figsize=(8.5,8.5))
+    ax = plt.axes()
+    ssf = 6 #subsample_factor
+    magnitude = np.sqrt(E_x ** 2 + E_y ** 2)
+    Ex_norm = E_x / np.amax(magnitude)
+    Ey_norm = E_y / np.amax(magnitude) 
+    E_x_t , E_y_t = potential_matrix_transform(-Ex_norm), potential_matrix_transform(-Ey_norm)
+    ax.quiver(xv[::ssf, ::ssf],  # Subsampled X-coordinates
+                yv[::ssf, ::ssf],  # Subsampled Y-coordinates
+                E_x_t[::ssf, ::ssf],  # Subsampled X-components
+                E_y_t[::ssf, ::ssf],  # Subsampled Y-components
+                scale=1,width=0.002 , color='blue',pivot='tip')  # Adjust the arrow length
+    a_mat_combined = np.vstack((dup_atom_matrix,atom_matrix))
+    atom_matrix_T = np.transpose(a_mat_combined)
+    ax.scatter(atom_matrix_T[0][:],atom_matrix_T[1][:],c='#39FF14',s=50)
+    #only transpose positions_ions array while plotting
+    for i, (key, coordinates) in enumerate(positions_ions.items()):
+      if not coordinates.size == 0:
+          x_values, y_values = zip(*coordinates)
+          ax.scatter(x_values, y_values, color=color[key])
+    potentials_Mirror_Transform = potential_matrix_transform(potentials)
+    ax.contour(xv,yv,potentials_Mirror_Transform,levels = 13,colors = 'gray',linestyles='None',linewidths=1) 
+    ax.set_xlabel('CGMC DENDRITE SIMULATION \nCapture Time: '+ str(round(t,8))+" seconds \n max height of dendrite = "+str(abs(max(dendrite_y_axis)))+" nm", loc = 'center',fontsize=14,fontweight='bold',fontname= 'Times New Roman' )
+    # ax.set_xlim(0,13.7)
+    # ax.set_ylim(0,13.7)
+    plt.savefig(filename2,dpi = 350)
+    # print("the image is under the name",filename2)
+    plt.close()
     #distance calculation between the ions and atoms and
     #deciding whether to attach it to the dendrite
-    num_ion_deleted = 0 #this variable counts the number of ions deleted and it helps in adding the same amount of ion in the next iteration.
     
     ion_to_atom_transfer = []
     for index_ion , ion  in enumerate(positions_ions['Mg(H2PO4)+']):
@@ -427,6 +579,10 @@ while (True):
             potentials = FDM_potentials_2_1(points_atom,iteration_count)
             E_x , E_y = FDM_Electric_Field_Vector(potentials)
             t2 = time.time()
+
+
+
+
             print("time of completion of one potential and one E vector calc: ", t2-t1)
             plt.figure(figsize=(8.5,8.5))
             ax = plt.axes()
@@ -443,51 +599,56 @@ while (True):
             a_mat_combined = np.vstack((dup_atom_matrix,atom_matrix))
             atom_matrix_T = np.transpose(a_mat_combined)
             ax.scatter(atom_matrix_T[0][:],atom_matrix_T[1][:],c='#39FF14',s=45)
-            #only transpose positions_ions array while plotting
-            positions_ions_T = np.transpose(positions_ions) 
-            ax.scatter(positions_ions_T[0,:],positions_ions_T[1,:],c='red',s=40)
+            color = {key: (r / 255, g / 255, b / 255) for key, (r, g, b) in color.items()}
+            atom_matrix_T = np.transpose(atom_matrix)
+            ax.scatter(atom_matrix_T[0][:],atom_matrix_T[1][:],c='#39FF14',s=45)
+            # Plotting ions
+            for i, (key, coordinates) in enumerate(positions_ions.items()):
+                if not coordinates.size == 0:
+                    x_values, y_values = zip(*coordinates)
+                    ax.scatter(x_values, y_values, color=color[key], label=key)
             potentials_Mirror_Transform = potential_matrix_transform(potentials)
             ax.contour(xv,yv,potentials_Mirror_Transform,levels = 13,colors = 'gray',linestyles='None',linewidths=1) 
             ax.set_xlabel('CGMC DENDRITE SIMULATION \nCapture Time: '+ str(round(t,8))+" seconds \n max height of dendrite = "+str(abs(max(dendrite_y_axis)))+" nm", loc = 'center',fontsize=14,fontweight='bold',fontname= 'Times New Roman' )
-            ax.set_xlim(0,16.7)
-            ax.set_ylim(0,16.7)
+            # ax.set_xlim(0,16.7)
+            # ax.set_ylim(0,16.7)
             plt.savefig(filename2,dpi = 350)
             # print("the image is under the name",filename2)
             plt.close()
-            if img2%4 ==0:
-                plt.figure(figsize=(8.5,8.5))
-                ax = plt.axes()
-                ax.quiver(xv[::ssf, ::ssf],  # Subsampled X-coordinates
-                        yv[::ssf, ::ssf],  # Subsampled Y-coordinates
-                        E_x_t[::ssf, ::ssf],  # Subsampled X-components
-                        E_y_t[::ssf, ::ssf],  # Subsampled Y-components
-                        scale=0.8 , color='blue',pivot='tip')  # Adjust the arrow length
-                ax.scatter(atom_matrix_T[0][:],atom_matrix_T[1][:],c='#39FF14',s=45)
-                #only transpose positions_ions array while plotting
-                ax.contour(xv,yv,potentials_Mirror_Transform,levels = 13,colors = 'gray',linestyles='None',linewidths=1)
-                start_points = np.round(np.array(positions_ions), decimals=32)
-                kdtree = cKDTree(positions_ions)
-                for isp,s_p in enumerate(start_points):
-                    indices = kdtree.query_ball_point(s_p, 2)
-                    for ind in indices:
-                        x_ind, y_ind = positions_ions[ind]
-                        # Calculate the arrow components
-                        dx = -(x_ind - s_p[0]) / 2
-                        dy = -(y_ind - s_p[1]) / 2
-                        # Plot the arrow
-                        ax.quiver(x_ind, y_ind, dx, dy, angles='xy', scale_units='xy', scale=1,color = 'k', width=0.003, headwidth=5,alpha=0.3)
-                        # Reverse direction
-                        dx = -(s_p[0] - x_ind) / 2
-                        dy = -(s_p[1] - y_ind) / 2
-                        # Plot the arrow in the reverse direction
-                        ax.quiver(s_p[0], s_p[1], dx, dy, angles='xy', scale_units='xy', scale=1,color = 'k', width=0.003, headwidth=5,alpha=0.3)
-                ax.scatter(positions_ions_T[0,:],positions_ions_T[1,:],c='red',s=40)   
-                ax.set_xlabel('CGMC DENDRITE SIMULATION \nCapture Time: '+ str(round(t,8))+" seconds \n max height of dendrite = "+str(abs(max(dendrite_y_axis)))+" nm", loc = 'center',fontsize=14,fontweight='bold',fontname= 'Times New Roman' )
-                ax.set_xlim(0,16.7)
-                ax.set_ylim(0,16.7)
-                plt.savefig(filename1,dpi = 400)
-                # print("the image is under the name",filename2)
-                plt.close()
+            # if img2%4 ==0:
+            #     plt.figure(figsize=(8.5,8.5))
+            #     ax = plt.axes()
+            #     ax.quiver(xv[::ssf, ::ssf],  # Subsampled X-coordinates
+            #             yv[::ssf, ::ssf],  # Subsampled Y-coordinates
+            #             E_x_t[::ssf, ::ssf],  # Subsampled X-components
+            #             E_y_t[::ssf, ::ssf],  # Subsampled Y-components
+            #             scale=0.8 , color='blue',pivot='tip')  # Adjust the arrow length
+            #     ax.scatter(atom_matrix_T[0][:],atom_matrix_T[1][:],c='#39FF14',s=45)
+            #     #only transpose positions_ions array while plotting
+            #     ax.contour(xv,yv,potentials_Mirror_Transform,levels = 13,colors = 'gray',linestyles='None',linewidths=1)
+            #     start_points = np.round(np.array(positions_ions), decimals=32)
+            #     kdtree = cKDTree(positions_ions)
+            #     for isp,s_p in enumerate(start_points):
+            #         indices = kdtree.query_ball_point(s_p, 2)
+            #         for ind in indices:
+            #             x_ind, y_ind = positions_ions[ind]
+            #             # Calculate the arrow components
+            #             dx = -(x_ind - s_p[0]) / 2
+            #             dy = -(y_ind - s_p[1]) / 2
+            #             # Plot the arrow
+            #             ax.quiver(x_ind, y_ind, dx, dy, angles='xy', scale_units='xy', scale=1,color = 'k', width=0.003, headwidth=5,alpha=0.3)
+            #             # Reverse direction
+            #             dx = -(s_p[0] - x_ind) / 2
+            #             dy = -(s_p[1] - y_ind) / 2
+            #             # Plot the arrow in the reverse direction
+            #             ax.quiver(s_p[0], s_p[1], dx, dy, angles='xy', scale_units='xy', scale=1,color = 'k', width=0.003, headwidth=5,alpha=0.3)
+            #     # ax.scatter(positions_ions_T[0,:],positions_ions_T[1,:],c='red',s=40)   
+            #     ax.set_xlabel('CGMC DENDRITE SIMULATION \nCapture Time: '+ str(round(t,8))+" seconds \n max height of dendrite = "+str(abs(max(dendrite_y_axis)))+" nm", loc = 'center',fontsize=14,fontweight='bold',fontname= 'Times New Roman' )
+            #     ax.set_xlim(0,16.7)
+            #     ax.set_ylim(0,16.7)
+            #     plt.savefig(filename1,dpi = 400)
+            #     # print("the image is under the name",filename2)
+            #     plt.close()
 
             img2 = img2 + 1
             
@@ -495,9 +656,9 @@ while (True):
 
     if len(ion_to_atom_transfer)>0:
         for _ in range(0,num_ion_deleted):
-            positions_ions = positions_ions.tolist()
-            positions_ions.append([random.random() * La , La]) 
-            positions_ions = np.array(positions_ions) 
+            positions_ions["Mg(H2PO4)+"] = positions_ions.tolist()
+            positions_ions["Mg(H2PO4)+"].append([random.random() * La , La]) 
+            positions_ions["Mg(H2PO4)+"] = np.array(positions_ions["Mg(H2PO4)+"]) 
         #  after this we have to assign the new atom positions into V_anode, and smoothen it by including many points
         # the smoothening is done in the FDM_potentials2() function itself.
         mask = np.isin(atom_matrix, dup_atom_matrix).all(axis=1)
@@ -515,7 +676,8 @@ while (True):
     dendrite_height.append(max((dendrite_y_axis)))
     time_array.append(t)
     dend = dend+1
-    # if the maximum of the dendrite is greater than or equal to  La - 0.4, then stop the simulation
+    # if the maximum of the dendrite i
+    # s greater than or equal to  La - 0.4, then stop the simulation
     # if max(dendrite_y_axis) >= 1:
     if (max(dendrite_y_axis)) >= (16):
         print(atom_matrix)
