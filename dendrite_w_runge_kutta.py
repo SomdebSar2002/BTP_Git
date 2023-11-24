@@ -328,7 +328,7 @@ def separate_arrays_by_column(array):
 positions_ions = {}
 #initializing random ions
 sizes= {"H+":0.053, "Mg2+":0.065, "NO3-":0.3, "H2PO4-":0.4,  "Mg(H2PO4)+":0.65, "Mg(NO3)2":0.6, "H3PO4":0.6, "HNO3":0.5}
-initial_ions = {"H+":10, "Mg2+":0, "NO3-":20, "H2PO4-":0 , "Mg(H2PO4)+":10,"Mg(NO3)2":0, "H3PO4":0, "HNO3":0}
+initial_ions = {"H+":10, "Mg2+":10, "NO3-":20, "H2PO4-":10 , "Mg(H2PO4)+":0,"Mg(NO3)2":0, "H3PO4":0, "HNO3":0}
 updated_positions_ions = {}
 for key,ion_num in initial_ions.items():
     positions_ions_element = []
@@ -367,7 +367,7 @@ while (True):
     iteration_count = iteration_count + 1
     print("\nEntering while loop")
     filename1 = "53_without_contours"+str(img2)+".jpg"
-    filename2 = "./dend 53 test/MHPT_test_01"+str(img2)+"__.jpg"
+    filename2 = "./dend 53 test/MHPT_runge_kutta_01"+str(img2)+"__.jpg"
     t = t + del_t
     E_indices = {}
 # finding the right electric field vector for each ion to act upon
@@ -455,56 +455,56 @@ while (True):
               #considered La=Lb for instance
             # print("collision detection \n \n")
     positions_ions = updated_positions_ions
-    # kdtree = cKDTree(list([positions_ions].values()))
+    kdtree = cKDTree(list([positions_ions].values()))
 
     # Set the radius within which to find nearest ions
-    # position_to_name_and_coord = {}
-    # for key,values in positions_ions.items():
-    #     for value in values:
-    #         s = str(value[0]) + " " + str(value[1])
-    #         position_to_name_and_coord[s] = [key,[value]]
+    position_to_name_and_coord = {}
+    for key,values in positions_ions.items():
+        for value in values:
+            s = str(value[0]) + " " + str(value[1])
+            position_to_name_and_coord[s] = [key,[value]]
 
     num_ion_deleted = 0 #this variable counts the number of ions deleted and it helps in adding the same amount of ion in the next iteration.
 
-    # # Loop through each ion and find nearest ions within the radius
-    # for ion_name, ion_coords in positions_ions.items():
-    #     # Query for neighbors within the specified radius
-    #     for i,ion_coord in enumerate(ion_coords,start=0):
-    #         neighbors_indices = kdtree.query_ball_point(ion_coord, r=sizes[ion_name]*2)
+    # Loop through each ion and find nearest ions within the radius
+    for ion_name, ion_coords in positions_ions.items():
+        # Query for neighbors within the specified radius
+        for i,ion_coord in enumerate(ion_coords,start=0):
+            neighbors_indices = kdtree.query_ball_point(ion_coord, r=sizes[ion_name]*2)
 
-    #     # Flatten the list of lists and filter out the index of the ion itself
+        # Flatten the list of lists and filter out the index of the ion itself
             
-    #         name,value = position_to_name_and_coord[neighbors_indices]
+            name,value = position_to_name_and_coord[neighbors_indices]
             
-    #         p = random.uniform(0,1)
-    #         if p<p_asn[i]:
-    #             #form the combined molecule
-    #             c = find_combination(ion_name,name)
-    #             if c!="NA":
-    #                 p = (int)(random.uniform(0,1)*2)
-    #                 coor = []
-    #                 if p<0.5:
-    #                     coor = neighbors_indices
-    #                 else:
-    #                     coor = ion_coord
-    #                 positions_ions[c].append(coor)
-    #                 position_to_name_and_coord[coor] =c,positions_ions.index(c)
-    #                 del positions_ions[name][value]
-    #                 del positions_ions[ion_name][i]
-    #         elif p<p_diss[name]:
-    #             if c=="Mg(H2PO4)+":
-    #                 positions_ions["H2PO4-"].append([ion_coord[0]+sizes["H2PO4-"],ion_coord[1]+sizes["H2PO4-"]])
-    #                 positions_ions["Mg2+"].append([ion_coord[0]-sizes["Mg2+"],ion_coord[1]-sizes["Mg2+"]])
-    #                 del positions_ions[name][value]
-    #             if c=="HNO3":
-    #                 positions_ions["H+"].append([ion_coord[0]+sizes["H+"],ion_coord[1]+sizes["H+"]])
-    #                 positions_ions["NO3-"].append([ion_coord[0]-sizes["NO3-"],ion_coord[1]-sizes["NO3-"]])
-    #                 del positions_ions[name][value]
-    #             if c=="Mg(NO3)2":
-    #                 positions_ions["H+"].append([ion_coord[0]+sizes["H+"],ion_coord[1]+sizes["H+"]])
-    #                 positions_ions["NO3-"].append([ion_coord[0]-sizes["NO3-"],ion_coord[1]-sizes["NO3-"]])
-    #                 positions_ions["NO3-"].append([ion_coord[0]-2*sizes["NO3-"],ion_coord[1]-2*sizes["NO3-"]])
-    #                 del positions_ions[name][value]
+            p = random.uniform(0,1)
+            if p<p_asn[i]:
+                #form the combined molecule
+                c = find_combination(ion_name,name)
+                if c!="NA":
+                    p = (int)(random.uniform(0,1)*2)
+                    coor = []
+                    if p<0.5:
+                        coor = neighbors_indices
+                    else:
+                        coor = ion_coord
+                    positions_ions[c].append(coor)
+                    position_to_name_and_coord[coor] =c,positions_ions.index(c)
+                    del positions_ions[name][value]
+                    del positions_ions[ion_name][i]
+            elif p<p_diss[name]:
+                if c=="Mg(H2PO4)+":
+                    positions_ions["H2PO4-"].append([ion_coord[0]+sizes["H2PO4-"],ion_coord[1]+sizes["H2PO4-"]])
+                    positions_ions["Mg2+"].append([ion_coord[0]-sizes["Mg2+"],ion_coord[1]-sizes["Mg2+"]])
+                    del positions_ions[name][value]
+                if c=="HNO3":
+                    positions_ions["H+"].append([ion_coord[0]+sizes["H+"],ion_coord[1]+sizes["H+"]])
+                    positions_ions["NO3-"].append([ion_coord[0]-sizes["NO3-"],ion_coord[1]-sizes["NO3-"]])
+                    del positions_ions[name][value]
+                if c=="Mg(NO3)2":
+                    positions_ions["H+"].append([ion_coord[0]+sizes["H+"],ion_coord[1]+sizes["H+"]])
+                    positions_ions["NO3-"].append([ion_coord[0]-sizes["NO3-"],ion_coord[1]-sizes["NO3-"]])
+                    positions_ions["NO3-"].append([ion_coord[0]-2*sizes["NO3-"],ion_coord[1]-2*sizes["NO3-"]])
+                    del positions_ions[name][value]
 
     #distance calculation between the ions and atoms and
     #deciding whether to attach it to the dendrite
@@ -576,10 +576,10 @@ while (True):
                         scale=1,width=0.002 , color='blue',pivot='tip')  # Adjust the arrow length
             a_mat_combined = np.vstack((dup_atom_matrix,atom_matrix))
             atom_matrix_T = np.transpose(a_mat_combined)
-            ax.scatter(atom_matrix_T[0][:],atom_matrix_T[1][:],c='#39FF14',s=250)
+            ax.scatter(atom_matrix_T[0][:],atom_matrix_T[1][:],c='#39FF14',s=260)
             color = {key: (r / 255, g / 255, b / 255) for key, (r, g, b) in color.items()}
             atom_matrix_T = np.transpose(atom_matrix)
-            ax.scatter(atom_matrix_T[0][:],atom_matrix_T[1][:],c='#39FF14',s=250)
+            ax.scatter(atom_matrix_T[0][:],atom_matrix_T[1][:],c='#39FF14',s=260)
             # Plotting ions
             for i, (key, coordinates) in enumerate(positions_ions.items()):
                 if not coordinates.size == 0:
@@ -589,8 +589,8 @@ while (True):
             ax.contour(xv,yv,potentials_Mirror_Transform,levels = 13,colors = 'gray',linestyles='None',linewidths=1) 
             ax.set_xlabel('CGMC DENDRITE SIMULATION \nCapture Time: '+ str(round(t,8))+" seconds \n max height of dendrite = "+str(abs(max(dendrite_y_axis)))+" nm", loc = 'center',fontsize=14,fontweight='bold',fontname= 'Times New Roman' )
             print(np.shape(atom_matrix))
-            ax.set_xlim(0,13.6)
-            ax.set_ylim(0,13.6)
+            ax.set_xlim(0,La)
+            ax.set_ylim(0,Lb)
             plt.savefig(filename2,dpi = 350)
             # print("the image is under the name",filename2)
             plt.close()
